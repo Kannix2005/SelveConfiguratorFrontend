@@ -53,6 +53,7 @@ module.exports = configure(function (/* ctx */) {
         node: "node16",
       },
 
+      devtool: "source-map",
       vueRouterMode: "hash", // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
@@ -86,7 +87,7 @@ module.exports = configure(function (/* ctx */) {
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework
     framework: {
       config: {},
-
+      cssAddon: true,
       all: "auto",
       // iconSet: 'material-icons', // Quasar icon set
       // lang: 'en-US', // Quasar language pack
@@ -100,7 +101,7 @@ module.exports = configure(function (/* ctx */) {
 
       // Quasar plugins
 
-      plugins: ["Loading", "Meta"],
+      plugins: ["Loading", "Meta", "Dialog"],
       config: {
         loading: {
           /* Loading defaults */
