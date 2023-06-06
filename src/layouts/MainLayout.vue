@@ -18,19 +18,12 @@
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered :width="200">
       <q-tabs vertical>
         <q-item-label header> Menu </q-item-label>
-        <q-route-tab name="Home" label="Home" icon="home" to="/" exact />
+        <q-route-tab name="Devices" label="Devices" icon="code" to="/" exact />
         <q-route-tab
           name="Gateway"
           label="Gateway"
           icon="school"
           to="/gateway"
-          exact
-        />
-        <q-route-tab
-          name="Devices"
-          label="Devices"
-          icon="code"
-          to="/devices"
           exact
         />
         <q-route-tab

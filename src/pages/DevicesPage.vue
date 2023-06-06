@@ -5,7 +5,7 @@
         flat
         bordered
         title="Devices"
-        :rows="gatewayData"
+        :rows="deviceData"
         :columns="columns"
         row-key="id"
         :filter="filter"
@@ -183,7 +183,7 @@ import axios from "axios";
 import { useQuasar } from "quasar";
 import { ref } from "vue";
 
-let gatewayData = {};
+let deviceData = {};
 const columns = [
   {
     name: "id",
@@ -232,7 +232,7 @@ export default {
       filter: ref(""),
       rowCount: ref(10),
       columns,
-      gatewayData: [],
+      deviceData: [],
       standard: ref(50),
     };
   },
@@ -253,7 +253,7 @@ export default {
         } else if (value <= 1) {
           mms = "DOWN_ON";
         }
-        this.gatewayData = [
+        this.deviceData = [
           {
             id: 1,
             type: "device",
@@ -308,7 +308,7 @@ export default {
           .get("devices")
           .then((val) => {
             console.log(val);
-            this.gatewayData = val;
+            this.deviceData = val;
           })
           .catch((err) => console.log(err))
           .finally(() => {
@@ -320,7 +320,7 @@ export default {
     },
 
     updateDevice(id) {
-      loading.value = true;
+      this.loading = true;
       axios
         .get("devices/" + id)
         .then((val) => {
@@ -329,12 +329,12 @@ export default {
         .catch((err) => console.log(err))
         .finally(() => {
           setTimeout(() => {
-            loading.value = false;
+            this.loading = false;
           }, 300);
         });
     },
     deleteDevice(id) {
-      loading.value = true;
+      this.loading = true;
       axios
         .delete("devices/delete/" + id)
         .then((val) => {
@@ -343,12 +343,12 @@ export default {
         .catch((err) => console.log(err))
         .finally(() => {
           setTimeout(() => {
-            loading.value = false;
+            this.loading = false;
           }, 300);
         });
     },
     renameDevice(id, name) {
-      loading.value = true;
+      this.loading = true;
       axios
         .put("devices/rename/" + id, { name: name })
         .then((val) => {
@@ -357,12 +357,12 @@ export default {
         .catch((err) => console.log(err))
         .finally(() => {
           setTimeout(() => {
-            loading.value = false;
+            this.loading = false;
           }, 300);
         });
     },
     setValue(id, val) {
-      loading.value = true;
+      this.loading = true;
       axios
         .post("devices/setValue/" + id, { value: val })
         .then((val) => {
@@ -371,7 +371,7 @@ export default {
         .catch((err) => console.log(err))
         .finally(() => {
           setTimeout(() => {
-            loading.value = false;
+            this.loading = false;
           }, 300);
         });
     },
@@ -449,7 +449,7 @@ export default {
           })
             .onOk((data) => {
               console.log(">>>> OK, received", data);
-              loading.value = true;
+              this.loading = true;
               axios
                 .post("gateway/learn/" + data)
                 .then((val) => {
@@ -461,7 +461,7 @@ export default {
                       cancel: true, // we want the user to be able to cancel it
                     })
                     .onCancel(() => {
-                      loading.value = true;
+                      this.loading = true;
                       axios
                         .get("gateway/stopLearn/")
                         .then((val) => {})
@@ -469,7 +469,7 @@ export default {
                         .finally(() => {
                           setTimeout(() => {
                             clearInterval(interval);
-                            loading.value = false;
+                            this.loading = false;
                             dialog.hide();
                             this.loadData();
                           }, 300);
@@ -479,7 +479,7 @@ export default {
                       this.loadData();
                     });
                   const interval = setInterval(() => {
-                    loading.value = true;
+                    this.loading = true;
                     axios
                       .get("gateway/learn/")
                       .then((val) => {
@@ -498,7 +498,7 @@ export default {
                       .catch((err) => console.log(err))
                       .finally(() => {
                         setTimeout(() => {
-                          loading.value = false;
+                          this.loading = false;
                         }, 300);
                       });
                   }, 500);
@@ -506,7 +506,7 @@ export default {
                 .catch((err) => console.log(err))
                 .finally(() => {
                   setTimeout(() => {
-                    loading.value = false;
+                    this.loading = false;
                   }, 300);
                 });
             })
