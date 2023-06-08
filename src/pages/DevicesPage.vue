@@ -155,10 +155,18 @@
                         <q-card-section>
                           <div>
                             <q-btn
+                              style="background: #7575ff; color: white"
+                              label="Set device function"
+                              icon="delete"
+                              class="flex-break"
+                              @click="deviceFunction(props.row.i)"
+                            />
+                            <q-btn
                               style="background: #ff0000; color: white"
                               label="Delete Device"
                               icon="delete"
                               class="flex-break"
+                              margin="10px"
                               @click="deletePopup(props.row.id, props.row.name)"
                             />
                           </div>
@@ -180,6 +188,7 @@
 
 <script>
 import axios from "axios";
+import { defineComponent } from "vue";
 import { useQuasar } from "quasar";
 import { ref } from "vue";
 
@@ -213,7 +222,8 @@ const columns = [
   },
 ];
 
-export default {
+export default defineComponent({
+  name: "DevicePage",
   setup() {
     let $q = useQuasar();
     return {
@@ -222,6 +232,7 @@ export default {
         descending: false,
         page: 1,
         rowsPerPage: 10,
+        $q,
         // rowsNumber: xx if getting data from a server
       },
     };
@@ -310,7 +321,10 @@ export default {
             console.log(val);
             this.deviceData = val;
           })
-          .catch((err) => console.log(err))
+          .catch((err) => {
+            console.log(err);
+            this.$notifyError(err.toString());
+          })
           .finally(() => {
             setTimeout(() => {
               this.loading = false;
@@ -326,7 +340,10 @@ export default {
         .then((val) => {
           this.loadData();
         })
-        .catch((err) => console.log(err))
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
         .finally(() => {
           setTimeout(() => {
             this.loading = false;
@@ -340,7 +357,10 @@ export default {
         .then((val) => {
           this.loadData();
         })
-        .catch((err) => console.log(err))
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
         .finally(() => {
           setTimeout(() => {
             this.loading = false;
@@ -354,7 +374,10 @@ export default {
         .then((val) => {
           this.loadData();
         })
-        .catch((err) => console.log(err))
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
         .finally(() => {
           setTimeout(() => {
             this.loading = false;
@@ -368,7 +391,10 @@ export default {
         .then((val) => {
           this.loadData();
         })
-        .catch((err) => console.log(err))
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
         .finally(() => {
           setTimeout(() => {
             this.loading = false;
@@ -377,12 +403,13 @@ export default {
     },
 
     deletePopup(id, name) {
-      $q.dialog({
-        title: "Confirm",
-        message: "Do you really want to delete the device " + name + "?",
-        cancel: true,
-        persistent: true,
-      })
+      this.$q
+        .dialog({
+          title: "Confirm",
+          message: "Do you really want to delete the device " + name + "?",
+          cancel: true,
+          persistent: true,
+        })
         .onOk(() => {
           this.deleteDevice(id);
           this.loadData();
@@ -398,16 +425,17 @@ export default {
         });
     },
     renamePopup(id, name) {
-      $q.dialog({
-        title: "Confirm",
-        message: "To what do you want to rename the device " + name + "?",
-        cancel: true,
-        persistent: true,
-        prompt: {
-          model: "",
-          type: "text",
-        },
-      })
+      this.$q
+        .dialog({
+          title: "Confirm",
+          message: "To what do you want to rename the device " + name + "?",
+          cancel: true,
+          persistent: true,
+          prompt: {
+            model: "",
+            type: "text",
+          },
+        })
         .onOk((data) => {
           this.renameDevice(id, data);
           this.loadData();
@@ -422,37 +450,41 @@ export default {
           // console.log('I am triggered on both OK and Cancel')
         });
     },
-    addPopup(id, name) {
-      $q.dialog({
-        title: "Add Device",
-        message: "Press OK to search for new devices.",
-        cancel: true,
-        persistent: true,
-      })
-        .onOk((data) => {
-          $q.dialog({
-            title: "Type of device to learn",
-            message: "Choose an option:",
-            options: {
-              type: "radio",
-              model: "opt1",
-              // inline: true
-              items: [
-                { label: "Commeo", value: "commeo" },
-                { label: "Iveo", value: "iveo" },
-                { label: "Sensor", value: "sensor" },
-                { label: "Sender", value: "sender" },
-              ],
-            },
-            cancel: true,
-            persistent: true,
-          })
+    addPopup() {
+      this.$q
+        .dialog({
+          title: "Add Device",
+          message: "Press OK to search for new devices.",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          this.$q
+            .dialog({
+              title: "Type of device to learn",
+              message: "Choose an option:",
+              options: {
+                type: "radio",
+                model: "opt1",
+                // inline: true
+                items: [
+                  { label: "Commeo", value: "commeo" },
+                  { label: "Iveo", value: "iveo" },
+                  { label: "Sensor", value: "sensor" },
+                  { label: "Sender", value: "sender" },
+                ],
+              },
+              cancel: true,
+              persistent: true,
+            })
             .onOk((data) => {
               console.log(">>>> OK, received", data);
               this.loading = true;
               axios
                 .post("gateway/learn/" + data)
                 .then((val) => {
+                  let foundDevices = {};
+                  let foundDevicesNo = 0;
                   let dialog = $q
                     .dialog({
                       message: "Time left: 240s",
@@ -465,7 +497,10 @@ export default {
                       axios
                         .get("gateway/stopLearn/")
                         .then((val) => {})
-                        .catch((err) => console.log(err))
+                        .catch((err) => {
+                          console.log(err);
+                          this.$notifyError(err.toString());
+                        })
                         .finally(() => {
                           setTimeout(() => {
                             clearInterval(interval);
@@ -475,35 +510,104 @@ export default {
                           }, 300);
                         });
 
+                      if (foundDevicesNo > 0) {
+                        this.$q
+                          .dialog({
+                            title: "Select found device save into the gateway",
+                            message: "Choose a device:",
+                            options: {
+                              type: "radio",
+                              model: "optFoundDevices",
+                              // inline: true
+                              items: foundDevices.items(),
+                            },
+                            cancel: true,
+                            persistent: true,
+                          })
+                          .onOk((data) => {
+                            axios
+                              .post("gateway/save/" + data)
+                              .then((val) => {})
+                              .catch((err) => {
+                                console.log(err);
+                                this.$notifyError(err.toString());
+                              })
+                              .finally(() => {
+                                setTimeout(() => {
+                                  this.loading = false;
+                                }, 300);
+                              });
+                          });
+                      }
+
                       dialog.hide();
                       this.loadData();
                     });
                   const interval = setInterval(() => {
                     this.loading = true;
                     axios
-                      .get("gateway/learn/")
+                      .get("gateway/learn/" + data)
                       .then((val) => {
                         dialog.update({
-                          message: `Time left: ${val.timeLeft}s`,
+                          message: `Time left: ${val.timeLeft}s <br> Found devices: ${val.foundDevicesNo}`,
                         });
-
+                        if (val.foundDevicesNo > 0) {
+                          foundDevices = val.foundDevices;
+                          foundDevicesNo = val.foundDevicesNo;
+                        }
                         if (val.timeLeft >= 240) {
                           clearInterval(interval);
                           setTimeout(() => {
+                            if (foundDevicesNo > 0) {
+                              this.$q
+                                .dialog({
+                                  title:
+                                    "Select found device save into the gateway",
+                                  message: "Choose a device:",
+                                  options: {
+                                    type: "radio",
+                                    model: "optFoundDevices",
+                                    // inline: true
+                                    items: foundDevices.items(),
+                                  },
+                                  cancel: true,
+                                  persistent: true,
+                                })
+                                .onOk((data) => {
+                                  axios
+                                    .post("gateway/save/" + data)
+                                    .then((val) => {})
+                                    .catch((err) => {
+                                      console.log(err);
+                                      this.$notifyError(err.toString());
+                                    })
+                                    .finally(() => {
+                                      setTimeout(() => {
+                                        this.loading = false;
+                                      }, 300);
+                                    });
+                                });
+                            }
                             dialog.hide();
                             this.loadData();
                           }, 350);
                         }
                       })
-                      .catch((err) => console.log(err))
+                      .catch((err) => {
+                        console.log(err);
+                        this.$notifyError(err.toString());
+                      })
                       .finally(() => {
                         setTimeout(() => {
                           this.loading = false;
                         }, 300);
                       });
-                  }, 500);
+                  }, 1000);
                 })
-                .catch((err) => console.log(err))
+                .catch((err) => {
+                  console.log(err);
+                  this.$notifyError(err.toString());
+                })
                 .finally(() => {
                   setTimeout(() => {
                     this.loading = false;
@@ -519,6 +623,120 @@ export default {
         })
         .onOk(() => {
           // console.log('>>>> second OK catcher')
+        })
+        .onCancel(() => {
+          // console.log('>>>> Cancel')
+        })
+        .onDismiss(() => {
+          // console.log('I am triggered on both OK and Cancel')
+        });
+    },
+    deviceFunction(id) {
+      this.$q
+        .dialog({
+          title: "Type of command to set the device to",
+          message: "Choose an option:",
+          options: {
+            type: "radio",
+            model: "optDeviceFunction",
+            // inline: true
+            items: [
+              { label: "Select", value: 0 },
+              { label: "Install", value: 1 },
+              { label: "Sensor", value: 2 },
+              { label: "ManProg", value: 3 },
+              { label: "AutoProg", value: 4 },
+              { label: "StorePosition", value: 5 },
+              { label: "DriveUp", value: 6 },
+              { label: "DriveDown", value: 7 },
+              { label: "KeyRelease", value: 8 },
+              { label: "DriveStop", value: 9 },
+            ],
+          },
+          cancel: true,
+          persistent: true,
+        })
+        .onOk((data) => {
+          console.log(">>>> OK, received", data);
+          this.loading = true;
+          axios
+            .post("device/" + id + "/setFunction/", data)
+            .then((val) => {
+              let dialog = $q
+                .dialog({
+                  message: "Set another function?",
+                  persistent: true, // we want the user to not be able to close it
+                  cancel: true, // we want the user to be able to cancel it
+                })
+                .onOk(() => {
+                  this.deviceFunction(id);
+                  dialog.hide();
+                })
+                .onCancel(() => {
+                  dialog.hide();
+                  this.loadData();
+                });
+            })
+            .catch((err) => {
+              console.log(err);
+              this.$notifyError(err.toString());
+            })
+            .finally(() => {
+              setTimeout(() => {
+                this.loading = false;
+              }, 300);
+            });
+        })
+        .onCancel(() => {
+          // console.log('>>>> Cancel')
+        })
+        .onDismiss(() => {
+          // console.log('I am triggered on both OK and Cancel')
+        });
+    },
+    deviceType(id) {
+      this.$q
+        .dialog({
+          title: "Type to set the device to",
+          message: "Choose an option:",
+          options: {
+            type: "radio",
+            model: "optDeviceType",
+            // inline: true
+            items: [
+              { label: "Shutter", value: 1 },
+              { label: "Blind", value: 2 },
+              { label: "Awning", value: 3 },
+              { label: "Switch", value: 4 },
+              { label: "Dimmer", value: 5 },
+              { label: "Night Light", value: 6 },
+              { label: "Dawn Light", value: 7 },
+              { label: "Heating", value: 8 },
+              { label: "Cooling", value: 9 },
+              { label: "Switch (daytime)", value: 10 },
+              { label: "gateway", value: 11 },
+            ],
+          },
+          cancel: true,
+          persistent: true,
+        })
+        .onOk((data) => {
+          console.log(">>>> OK, received", data);
+          this.loading = true;
+          axios
+            .post("device/" + id + "/setType/", data)
+            .then((val) => {
+              dialog.hide();
+            })
+            .catch((err) => {
+              console.log(err);
+              this.$notifyError(err.toString());
+            })
+            .finally(() => {
+              setTimeout(() => {
+                this.loading = false;
+              }, 300);
+            });
         })
         .onCancel(() => {
           // console.log('>>>> Cancel')
@@ -648,5 +866,5 @@ export default {
       }
     },
   },
-};
+});
 </script>

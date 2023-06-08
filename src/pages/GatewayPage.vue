@@ -146,7 +146,7 @@ export default defineComponent({
   name: "GatewayPage",
   setup() {
     let $q = useQuasar();
-    return {};
+    return { $q };
   },
   data() {
     return {
@@ -167,61 +167,23 @@ export default defineComponent({
     loadGatewayData() {
       this.loading = true;
 
-      if (window.location.href.indexOf("localhost") >= 0) {
-        let value = Math.random();
-        let mms = "";
-        if (value <= 0.3) {
-          mms = "UP_ON";
-        } else if (value <= 0.6) {
-          mms = "STOPPED_OFF";
-        } else if (value <= 1) {
-          mms = "DOWN_ON";
-        }
-        this.gatewayData = {
-          port: 1,
-          state: "device",
-          lastLogEvent: "Dingsbums1",
-          version: "12314.154545.22",
-          serial: "ffaasdfsdaffas1413414",
-          spec: "sdafdfdsafdsafds",
-          duty: {
-            utilization: 1,
-            sendingBlocked: false,
-          },
-          worker: {
-            state: "Running",
-          },
-          queue: {
-            txq: {
-              items: 0,
-            },
-            rxq: {
-              items: 0,
-            },
-          },
-          repeaterState: "No repeater installed",
-        };
-
-        this.loading = false;
-      } else {
-        axios
-          .get("gatewayData")
-          .then((val) => {
-            console.log(val);
-            this.gatewayData = val;
-          })
-          .catch((err) => {
-            console.log(err);
-            showNotifError(err);
-          })
-          .finally(() => {
-            setTimeout(() => {
-              this.loading = false;
-            }, 300);
-          });
-        this.getEvents();
-        this.getGatewayLED();
-      }
+      axios
+        .get("gatewayData")
+        .then((val) => {
+          console.log(val);
+          this.gatewayData = val.data;
+        })
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
+        .finally(() => {
+          setTimeout(() => {
+            this.loading = false;
+          }, 300);
+        });
+      this.getEvents();
+      this.getGatewayLED();
     },
 
     labelkeyGateway(key, value) {
@@ -379,7 +341,7 @@ export default defineComponent({
       axios
         .get("gateway/led")
         .then((val) => {
-          this.valueLED = val;
+          this.valueLED = val.data.ledState;
         })
         .catch((err) => {
           console.log(err);
@@ -413,7 +375,7 @@ export default defineComponent({
       axios
         .get("gateway/events")
         .then((val) => {
-          this.events = val;
+          this.events = val.data;
         })
         .catch((err) => {
           console.log(err);
@@ -434,7 +396,7 @@ export default defineComponent({
       axios
         .get("gateway/repeater")
         .then((val) => {
-          this.repeaterState = val;
+          this.repeaterState = val.data.repeaterState;
         })
         .catch((err) => {
           console.log(err);
