@@ -47,12 +47,80 @@
           </q-item>
           <q-item tag="label" v-ripple>
             <q-item-section>
-              <q-item-label
-                >Factory Reset gateway -
-                <font color="red"
-                  ><strong> Deletes all devices --- DANGER!!!</strong></font
-                ></q-item-label
-              >
+              <q-item-label>Set repeater forwarding</q-item-label>
+              <div class="text-h10">
+                <q-badge
+                  color="blue"
+                  :label="gatewayData.repeaterState"
+                  outline
+                  align="middle"
+                >
+                </q-badge>
+              </div>
+            </q-item-section>
+            <q-item-section side>
+              <q-btn
+                color="primary"
+                label="Set Repeater"
+                @click="this.setRepeater()"
+              ></q-btn>
+            </q-item-section>
+          </q-item>
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>Set gateway events</q-item-label>
+
+              <q-checkbox
+                v-model="events.log"
+                label="Log"
+                @update:model-value="this.setEvents('log', events.log)"
+              />
+              <q-checkbox
+                v-model="events.device"
+                label="Device"
+                @update:model-value="this.setEvents('device', events.device)"
+              />
+              <q-checkbox
+                v-model="events.sensor"
+                label="Sensor"
+                @update:model-value="this.setEvents('sensor', events.sensor)"
+              />
+              <q-checkbox
+                v-model="events.sender"
+                label="Sender"
+                @update:model-value="this.setEvents('sender', events.sender)"
+              />
+              <q-checkbox
+                v-model="events.duty"
+                label="Duty Cycle"
+                @update:model-value="this.setEvents('duty', events.duty)"
+              />
+            </q-item-section>
+          </q-item>
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>Factory reset Iveo channel</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-btn
+                color="red"
+                label="Factory reset channel"
+                @click="this.iveoFactory()"
+              ></q-btn>
+            </q-item-section>
+          </q-item>
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>Factory reset gateway</q-item-label>
+
+              <div class="text-h10">
+                <q-badge
+                  color="red"
+                  label="Deletes all devices --- DANGER!!!"
+                  align="middle"
+                >
+                </q-badge>
+              </div>
             </q-item-section>
             <q-item-section side>
               <q-btn
@@ -60,58 +128,6 @@
                 label="FACTORY RESET"
                 @click="this.factoryResetGateway()"
               ></q-btn>
-            </q-item-section>
-          </q-item>
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Enable gateway LEDs</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle
-                color="blue"
-                v-model="valueLED"
-                val="battery"
-                @update:model-value="this.setGatewayLED(valueLED)"
-              />
-            </q-item-section>
-          </q-item>
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Enable gateway LEDs</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle
-                color="blue"
-                v-model="valueLED"
-                val="battery"
-                @update:model-value="this.setGatewayLED(valueLED)"
-              />
-            </q-item-section>
-          </q-item>
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Enable gateway LEDs</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle
-                color="blue"
-                v-model="valueLED"
-                val="battery"
-                @update:model-value="this.setGatewayLED(valueLED)"
-              />
-            </q-item-section>
-          </q-item>
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Enable gateway LEDs</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle
-                color="blue"
-                v-model="valueLED"
-                val="battery"
-                @update:model-value="this.setGatewayLED(valueLED)"
-              />
             </q-item-section>
           </q-item>
         </q-list>
@@ -126,8 +142,6 @@ import axios from "axios";
 import { useQuasar } from "quasar";
 import { ref } from "vue";
 
-let deviceData = {};
-
 export default defineComponent({
   name: "GatewayPage",
   setup() {
@@ -140,6 +154,13 @@ export default defineComponent({
       loading: ref(false),
       valueLED: ref(true),
       valueA: ref(true),
+      events: {
+        log: true,
+        device: true,
+        sensor: false,
+        sender: false,
+        duty: true,
+      },
     };
   },
   methods: {
@@ -178,6 +199,7 @@ export default defineComponent({
               items: 0,
             },
           },
+          repeaterState: "No repeater installed",
         };
 
         this.loading = false;
@@ -188,12 +210,17 @@ export default defineComponent({
             console.log(val);
             this.gatewayData = val;
           })
-          .catch((err) => console.log(err))
+          .catch((err) => {
+            console.log(err);
+            showNotifError(err);
+          })
           .finally(() => {
             setTimeout(() => {
               this.loading = false;
             }, 300);
           });
+        this.getEvents();
+        this.getGatewayLED();
       }
     },
 
@@ -205,7 +232,7 @@ export default defineComponent({
             icon: "signal_wifi_4_bar",
             headerclass: "",
             disable: true,
-            caption: value,
+            caption: value.toString(),
           };
         case "lastLogEvent":
           return {
@@ -213,28 +240,28 @@ export default defineComponent({
             icon: "timeline",
             headerclass: "",
             disable: true,
-            caption: value,
+            caption: value.toString(),
           };
         case "version":
           return {
             label: "Version",
-            icon: "percent",
+            icon: "tag",
             headerclass: "",
             disable: true,
-            caption: value,
+            caption: value.toString(),
           };
         case "serial":
           return {
-            caption: value,
-            icon: "check",
+            caption: value.toString(),
+            icon: "tag",
             headerclass: "",
             disable: true,
             label: "Serial",
           };
         case "spec":
           return {
-            caption: value,
-            icon: "check",
+            caption: value.toString(),
+            icon: "tag",
             headerclass: "",
             disable: true,
             label: "Spec",
@@ -253,11 +280,19 @@ export default defineComponent({
           };
         case "worker":
           return {
-            caption: value.state,
+            caption: value.state.toString(),
             icon: "check",
             headerclass: value.state === "Running" ? "text-green" : "text-red",
             disable: true,
             label: "Worker state",
+          };
+        case "port":
+          return {
+            caption: value.toString(),
+            icon: "power",
+            headerclass: "",
+            disable: true,
+            label: "Port",
           };
         case "queue":
           return {
@@ -275,7 +310,7 @@ export default defineComponent({
 
         default:
           return {
-            caption: value,
+            caption: value.toString(),
             icon: "question_mark",
             headerclass: "",
             disable: true,
@@ -291,7 +326,10 @@ export default defineComponent({
         .then((val) => {
           this.loadData();
         })
-        .catch((err) => console.log(err))
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
         .finally(() => {
           setTimeout(() => {
             this.loading = false;
@@ -305,12 +343,19 @@ export default defineComponent({
         .then((val) => {
           this.loadData();
         })
-        .catch((err) => console.log(err))
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
         .finally(() => {
           setTimeout(() => {
             this.loading = false;
           }, 300);
         });
+    },
+    iveoFactory() {
+      this.loading = true;
+      //show popup with security check and selection
     },
     setGatewayLED(val) {
       this.loading = true;
@@ -319,7 +364,10 @@ export default defineComponent({
         .then((val) => {
           this.getGatewayLED();
         })
-        .catch((err) => console.log(err))
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
         .finally(() => {
           setTimeout(() => {
             this.loading = false;
@@ -333,7 +381,65 @@ export default defineComponent({
         .then((val) => {
           this.valueLED = val;
         })
-        .catch((err) => console.log(err))
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
+        .finally(() => {
+          setTimeout(() => {
+            this.loading = false;
+          }, 300);
+        });
+    },
+    setEvents(type, val) {
+      this.loading = true;
+      axios
+        .post("gateway/events", { type: type, value: val })
+        .then((val) => {
+          this.getGatewayLED();
+        })
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
+        .finally(() => {
+          setTimeout(() => {
+            this.loading = false;
+          }, 300);
+        });
+    },
+    getEvents() {
+      this.loading = true;
+      axios
+        .get("gateway/events")
+        .then((val) => {
+          this.events = val;
+        })
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
+        .finally(() => {
+          setTimeout(() => {
+            this.loading = false;
+          }, 300);
+        });
+    },
+    setRepeater(type, val) {
+      this.loading = true;
+      //show popup
+    },
+    getRepeater() {
+      this.loading = true;
+      axios
+        .get("gateway/repeater")
+        .then((val) => {
+          this.repeaterState = val;
+        })
+        .catch((err) => {
+          console.log(err);
+          this.$notifyError(err.toString());
+        })
         .finally(() => {
           setTimeout(() => {
             this.loading = false;

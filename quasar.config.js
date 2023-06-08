@@ -27,7 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli/boot-files
-    boot: ["axios"],
+    boot: ["axios", "notify"],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ["app.scss"],
@@ -101,7 +101,7 @@ module.exports = configure(function (/* ctx */) {
 
       // Quasar plugins
 
-      plugins: ["Loading", "Meta", "Dialog"],
+      plugins: ["Loading", "Meta", "Dialog", "Notify"],
       config: {
         loading: {
           /* Loading defaults */
